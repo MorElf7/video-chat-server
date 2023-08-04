@@ -5,7 +5,6 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "tsc --build",
-		"prestart": "npm run build",
 		"start": "cross-env NODE_ENV='production' nodemon dist/index.js",
 		"predev": "npm run build",
 		"dev": "cross-env NODE_ENV='development' nodemon src/index.ts"
