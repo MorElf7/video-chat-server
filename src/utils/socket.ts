@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import { Namespace, Server, Socket } from "socket.io";
 import config from "../config";
 import Room from "../models/Room";
-import logger from "./logger";
 
 let clients: any = {},
 	rooms: any = [];
@@ -12,9 +11,9 @@ function updateClient(userId: string, newSocketId: string) {
 	if (clients.hasOwnProperty(userId)) {
 		clients[userId].oldSocketId = clients[userId].socketId;
 		clients[userId].socketId = newSocketId;
-		logger.info(`Client with id ${userId} reconnected with new socket id: ${newSocketId}`);
+		console.log(`Client with id ${userId} reconnected with new socket id: ${newSocketId}`);
 	} else {
-		logger.info(`Cannot find client with id ${userId}`);
+		console.log(`Cannot find client with id ${userId}`);
 	}
 }
 
@@ -33,7 +32,7 @@ export function setUpSocket(server: httpServer) {
 		const token = socket.handshake.auth.token;
 		jwt.verify(token, config.accessTokenSecret, (err: any, decoded: any) => {
 			if (err) {
-				logger.error(err);
+				console.error(err);
 				ns.to(socket.id).emit("unauthorized", {
 					message: "Invalid token",
 				});
@@ -53,7 +52,7 @@ export function setUpSocket(server: httpServer) {
 				rooms: [],
 			};
 			clients[socket.data.user.id] = clientInfo;
-			logger.info(`Client connected with id: ${socket.data.user.id}`);
+			console.log(`Client connected with id: ${socket.data.user.id}`);
 		}
 		socket.on("subscribe", async (data) => {
 			socket.leave(data.roomId);
@@ -68,7 +67,7 @@ export function setUpSocket(server: httpServer) {
 			room?.users.push(socket.data.user.id);
 			await room?.save();
 			socket.to(data.roomId).emit("new-user", { socket: socket.id });
-			logger.info(`Client with id ${socket.data.user.id} subscribed to room ${data.roomId}`);
+			console.log(`Client with id ${socket.data.user.id} subscribed to room ${data.roomId}`);
 		});
 
 		socket.on("make-offer", (data) => {
@@ -107,7 +106,7 @@ export function setUpSocket(server: httpServer) {
 			clients[socket.data.user.id].rooms = clients[socket.data.user.id].rooms.filter(
 				(id: string) => id !== data.roomId
 			);
-			logger.info(`Client with id ${socket.data.user.id} unsubscribed from room ${data.roomId}`);
+			console.log(`Client with id ${socket.data.user.id} unsubscribed from room ${data.roomId}`);
 			const room = await Room.findById(data.roomId);
 			room && (room.users = room?.users.filter((id) => !id.equals(socket.data.user.id)));
 			if (room?.users.length === 0) {
@@ -131,11 +130,11 @@ export function setUpSocket(server: httpServer) {
 			ns.emit("user-disconnected", {
 				socketId: socket.id,
 			});
-			logger.info(`Client disconnected with id: ${socket.data.user.id}`);
+			console.log(`Client disconnected with id: ${socket.data.user.id}`);
 		});
 
 		socket.on("reconnect", (attemptNumber) => {
-			logger.info(
+			console.log(
 				`Client with id ${socket.data.user.id} attempting to reconnect (attempt ${attemptNumber})...`
 			);
 			updateClient(socket.data.user.id, socket.id);
