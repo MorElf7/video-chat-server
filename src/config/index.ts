@@ -17,7 +17,7 @@ const config = {
 		prefix: "/api",
 	},
 	db: {
-		url: process.env.MONGDB_URL || "mongodb://localhost:27017/video-chat",
+		url: process.env.MONGODB_URL || "mongodb://localhost:27017/video-chat",
 	},
 	accessTokenSecret: process.env.ACCESS_TOKEN_SECRET || "supersupersecretkey",
 	refreshTokenSecret: process.env.REFRESH_TOKEN_SECRET || "supersecretsecretkey",
