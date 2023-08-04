@@ -5,9 +5,9 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "tsc --build",
-		"start": "cross-env NODE_ENV='production' node dist/index.js",
+		"start": "node dist/index.js",
 		"predev": "npm run build",
-		"dev": "cross-env NODE_ENV='development' nodemon src/index.ts"
+		"dev": "cross-env NODE_ENV=development nodemon src/index.ts"
 	},
 	"author": "Steve Cao",
 	"license": "ISC",
