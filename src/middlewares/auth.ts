@@ -12,7 +12,9 @@ export const auth = () =>
 		}
 		const token = tokenBearer.split(" ")[1];
 
-		const decoded = jwt.verify(token, config.accessTokenSecret) as any;
-		res.locals.user = decoded;
+		jwt.verify(token, config.accessTokenSecret, function (err, decoded) {
+			if (err) throw new HttpException(401, `Invalid token`)
+			res.locals.user = decoded;
+		}) ;
 		next();
 	});

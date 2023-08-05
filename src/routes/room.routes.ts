@@ -12,5 +12,7 @@ export default (app: Router) => {
 
 	router.post("/", auth(), expressAsyncHandler(RoomController.createRoom));
 
-	router.post("/:roomId", auth(), expressAsyncHandler(RoomController.getRoomById));
+	router.get("/:roomId", auth(), expressAsyncHandler(RoomController.getRoomById));
+
+	router.delete("/:roomId", auth(), expressAsyncHandler(RoomController.getRoomById));
 };

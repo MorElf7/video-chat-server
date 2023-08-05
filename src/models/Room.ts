@@ -8,6 +8,7 @@ const roomSchema = new Schema(
 				ref: "user",
 			},
 		],
+		type: String,
 		updatedAt: {
 			type: Date,
 			default: Date.now,

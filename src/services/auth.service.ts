@@ -7,19 +7,21 @@ import {
 	LoginResponse,
 	SignUpRequest,
 } from "../interfaces/IAuth";
+import { DataResponse } from "../interfaces/IResponse";
+import { UserDto } from "../interfaces/IUser";
 import UserCredential from "../models/RefreshToken";
 import User from "../models/User";
 import HttpException from "../utils/HttpException";
 import { checkUser } from "../utils/checkUser";
 
 const generateAccessToken = (user: any) => {
-	return jwt.sign(JSON.stringify(user), config.accessTokenSecret, {
-		expiresIn: "12h",
+	return jwt.sign(user, config.accessTokenSecret, {
+		expiresIn: 12 * 60 * 60 * 1000,
 	});
 };
 
 const generateRefreshToken = async (id: string, ipAddress: string) => {
-	const refreshToken = jwt.sign(JSON.stringify({ id: id }), config.refreshTokenSecret);
+	const refreshToken = jwt.sign({ id: id }, config.refreshTokenSecret);
 	await UserCredential.create({
 		user: id,
 		token: refreshToken,
@@ -35,7 +37,7 @@ export class AuthService {
 		const { username, password, ipAddress } = payload;
 		const userInfo = await User.findOne({ username });
 		if (!userInfo) {
-			throw new HttpException(404, "Invalid username or password");
+			throw new HttpException(401, "Invalid username or password");
 		}
 		const matchPassword = await bcrypt.compare(password, userInfo.passwordHash);
 		if (matchPassword) {
@@ -83,11 +85,19 @@ export class AuthService {
 		) {
 			throw new HttpException(401, "Invalid token");
 		}
-		const userInfo = await checkUser({ user: userCredential?.user });
+		const userInfo = await checkUser({ _id: userCredential?.user });
 
 		const accessToken = generateAccessToken(userInfo?.toJSON());
 		return {
 			token: accessToken,
 		};
+	}
+
+	static async getUserProfile(currentUser: any): Promise<DataResponse<UserDto>> {
+		const userProfile = await User.findById(currentUser.id);
+		if (!userProfile) {
+			throw new HttpException(404, "User not found");
+		}
+		return { data: userProfile.toJSON() };
 	}
 }

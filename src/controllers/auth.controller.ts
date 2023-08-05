@@ -12,7 +12,7 @@ export class AuthController {
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
-				err?.response?.data?.message || err?.stack || err?.message
+				err?.response?.data?.message || err?.message
 			);
 		}
 	};
@@ -25,7 +25,7 @@ export class AuthController {
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
-				err?.response?.data?.message || err?.stack || err?.message
+				err?.response?.data?.message || err?.message
 			);
 		}
 	};
@@ -38,7 +38,19 @@ export class AuthController {
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
-				err?.response?.data?.message || err?.stack || err?.message
+				err?.response?.data?.message || err?.message
+			);
+		}
+	};
+	static getUserProfile = async (req: Request, res: Response) => {
+		try {
+			const { user } = res.locals;
+			const result = await AuthService.getUserProfile(user);
+			res.json(result);
+		} catch (err: any) {
+			throw new HttpException(
+				err?.response?.data?.status || err?.status || 500,
+				err?.response?.data?.message || err?.message
 			);
 		}
 	};
