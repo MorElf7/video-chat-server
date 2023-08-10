@@ -8,8 +8,7 @@ export class RoomController {
 		try {
 			const { user } = res.locals;
 			const queries = req.query as unknown as QueriesRequest;
-			const result = await RoomService.getRooms(user, queries);
-			res.json(result);
+			res.json(await RoomService.getRooms(queries));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
@@ -17,10 +16,22 @@ export class RoomController {
 			);
 		}
 	};
-	static createRoom = async (req: Request, res: Response) => {
+	static getUserRooms = async (req: Request, res: Response) => {
 		try {
-			const result = await RoomService.createRoom();
-			res.json(result);
+			const { user } = res.locals;
+			const queries = req.query as unknown as QueriesRequest;
+			res.json(await RoomService.getUserRooms(user, queries));
+		} catch (err: any) {
+			throw new HttpException(
+				err?.response?.data?.status || err?.status || 500,
+				err?.response?.data?.message || err?.message
+			);
+		}
+	};
+	static saveRoom = async (req: Request, res: Response) => {
+		try {
+			const { user } = res.locals;
+			res.json(await RoomService.saveRoom(user, req.body));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
@@ -31,8 +42,8 @@ export class RoomController {
 	static getRoomById = async (req: Request, res: Response) => {
 		try {
 			const { roomId } = req.params;
-			const result = await RoomService.getRoomById(roomId);
-			res.json(result);
+			const { user } = res.locals;
+			res.json(await RoomService.getRoomById(user, roomId));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
@@ -43,8 +54,31 @@ export class RoomController {
 	static deleteRoomById = async (req: Request, res: Response) => {
 		try {
 			const { roomId } = req.params;
-			const result = await RoomService.deleteRoomById(roomId);
-			res.json(result);
+			res.json(await RoomService.deleteRoomById(roomId));
+		} catch (err: any) {
+			throw new HttpException(
+				err?.response?.data?.status || err?.status || 500,
+				err?.response?.data?.message || err?.message
+			);
+		}
+	};
+	static getRoomByCallRoomId = async (req: Request, res: Response) => {
+		try {
+			const { roomId } = req.params;
+			res.json(await RoomService.getRoomByCallRoomId(roomId));
+		} catch (err: any) {
+			throw new HttpException(
+				err?.response?.data?.status || err?.status || 500,
+				err?.response?.data?.message || err?.message
+			);
+		}
+	};
+	static getChatsByRoomId = async (req: Request, res: Response) => {
+		try {
+			const { user } = res.locals;
+			const { roomId } = req.params;
+			const queries = req.query as unknown as QueriesRequest;
+			res.json(await RoomService.getChatsByRoomId(user, roomId, queries));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,

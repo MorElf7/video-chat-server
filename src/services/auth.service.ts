@@ -9,10 +9,10 @@ import {
 } from "../interfaces/IAuth";
 import { DataResponse } from "../interfaces/IResponse";
 import { UserDto } from "../interfaces/IUser";
-import UserCredential from "../models/RefreshToken";
 import User from "../models/User";
+import UserCredential from "../models/UserCredentials";
 import HttpException from "../utils/HttpException";
-import { checkUser } from "../utils/checkUser";
+import { checkUser } from "../utils/checkUtility";
 
 const generateAccessToken = (user: any) => {
 	return jwt.sign(user, config.accessTokenSecret, {
@@ -41,7 +41,8 @@ export class AuthService {
 		}
 		const matchPassword = await bcrypt.compare(password, userInfo.passwordHash);
 		if (matchPassword) {
-			const token = generateAccessToken(userInfo.toJSON());
+			const user = { ...userInfo.toJSON(), avatar: null };
+			const token = generateAccessToken(user);
 			const refreshToken = await generateRefreshToken(userInfo._id.toString(), ipAddress);
 			return {
 				token,
@@ -65,7 +66,8 @@ export class AuthService {
 			firstName,
 			lastName,
 		});
-		const token = generateAccessToken(userInfo.toJSON());
+		const user = { ...userInfo.toJSON(), avatar: null };
+		const token = generateAccessToken(user);
 		const refreshToken = await generateRefreshToken(userInfo._id.toString(), ipAddress);
 		return {
 			token,
@@ -87,7 +89,8 @@ export class AuthService {
 		}
 		const userInfo = await checkUser({ _id: userCredential?.user });
 
-		const accessToken = generateAccessToken(userInfo?.toJSON());
+		const user = { ...userInfo.toJSON(), avatar: null };
+		const accessToken = generateAccessToken(user);
 		return {
 			token: accessToken,
 		};

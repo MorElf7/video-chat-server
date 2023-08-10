@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import UserCredential from "./RefreshToken";
+import UserCredential from "./UserCredentials";
 
 const userSchema = new Schema(
 	{
@@ -20,17 +20,9 @@ const userSchema = new Schema(
 			type: String,
 			required: true,
 		},
-		email: {
-			type: String,
-			unique: true,
-		},
-		phone: {
-			type: String,
-			unique: true,
-		},
-		avatar: {
-			type: String,
-		},
+		email: { type: String },
+		phone: { type: String },
+		avatar: String,
 		bio: String,
 		updatedAt: {
 			type: Date,
@@ -69,6 +61,14 @@ userSchema.post("findOneAndUpdate", function (doc) {
 	if (doc) {
 		doc.updatedAt = Date.now();
 	}
+});
+
+userSchema.index({
+	username: "text",
+	firstName: "text",
+	lastName: "text",
+	email: "text",
+	phone: "text",
 });
 
 export default model("User", userSchema);

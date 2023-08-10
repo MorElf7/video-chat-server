@@ -7,8 +7,7 @@ export class AuthController {
 		try {
 			const payload = req.body;
 			payload.ipAddress = req.ip;
-			const result = await AuthService.login(payload);
-			res.json(result);
+			res.json(await AuthService.login(payload));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
@@ -20,8 +19,7 @@ export class AuthController {
 		try {
 			const payload = req.body;
 			payload.ipAddress = req.ip;
-			const result = await AuthService.signup(payload);
-			res.json(result);
+			res.json(await AuthService.signup(payload));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
@@ -33,8 +31,7 @@ export class AuthController {
 		try {
 			const payload = req.body;
 			payload.ipAddress = req.ip;
-			const result = await AuthService.getAccessToken(payload);
-			res.json(result);
+			res.json(await AuthService.getAccessToken(payload));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,
@@ -45,8 +42,7 @@ export class AuthController {
 	static getUserProfile = async (req: Request, res: Response) => {
 		try {
 			const { user } = res.locals;
-			const result = await AuthService.getUserProfile(user);
-			res.json(result);
+			res.json(await AuthService.getUserProfile(user));
 		} catch (err: any) {
 			throw new HttpException(
 				err?.response?.data?.status || err?.status || 500,

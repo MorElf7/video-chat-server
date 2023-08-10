@@ -2,20 +2,8 @@ import { Server as httpServer } from "http";
 import jwt from "jsonwebtoken";
 import { Namespace, Server, Socket } from "socket.io";
 import config from "../config";
+import Chat from "../models/Chat";
 import Room from "../models/Room";
-
-let clients: any = {},
-	rooms: any = [];
-
-function updateClient(userId: string, newSocketId: string) {
-	if (clients.hasOwnProperty(userId)) {
-		clients[userId].oldSocketId = clients[userId].socketId;
-		clients[userId].socketId = newSocketId;
-		console.log(`Client with id ${userId} reconnected with new socket id: ${newSocketId}`);
-	} else {
-		console.log(`Cannot find client with id ${userId}`);
-	}
-}
 
 export function setUpSocket(server: httpServer) {
 	const io: Server = new Server(server, {
@@ -42,102 +30,108 @@ export function setUpSocket(server: httpServer) {
 			next();
 		});
 	});
-
 	ns.on("connection", (socket: Socket) => {
-		if (!clients[socket.data.user.id]) {
-			const clientInfo = {
-				socketId: socket.id,
-				...socket.data.user,
-				oldSocketId: null,
-				rooms: [],
-			};
-			clients[socket.data.user.id] = clientInfo;
-			console.log(`Client connected with id: ${socket.data.user.id}`);
-		}
-		socket.on("subscribe", async (data) => {
-			socket.leave(data.roomId);
-			socket.join(data.roomId);
-			if (!rooms.find((id: string) => id === data.roomId)) {
-				rooms.push(data.roomId);
-			}
-			if (clients[socket.data.user.id].rooms.find((id: any) => id === data.roomId)) {
-				clients[socket.data.user.id].rooms.push(data.roomId);
-			}
-			const room = await Room.findById(data.roomId);
-			room?.users.push(socket.data.user.id);
-			await room?.save();
-			socket.to(data.roomId).emit("new-user", { socket: socket.id });
-			console.log(`Client with id ${socket.data.user.id} subscribed to room ${data.roomId}`);
-		});
+		console.log(`Client connected with id: ${socket.id}`);
+		socket.on(
+			"subscribe",
+			async (data: { roomId: string; type: string; audio: boolean; video: boolean }) => {
+				const room = await Room.findById(data.roomId);
+				if (!room) return;
+				socket.join(data.roomId);
+				if (!room.users.find((id) => id.equals(socket.data.user.id))) {
+					room?.users.push(socket.data.user.id);
+					await room?.save();
+				}
+				const sockets = await ns.in(data.roomId).fetchSockets();
+				if (sockets.length === 1) {
+					ns.to(socket.id).emit("first-user");
+				}
 
-		socket.on("make-offer", (data) => {
-			socket.to(data.to).emit("offer-made", {
-				offer: data.offer,
-				socket: socket.id,
-			});
-		});
+				socket.to(data.roomId).emit("new-user", {
+					type: data.type,
+					socket: socket.id,
+					user: socket.data.user.id,
+					audio: data.audio,
+					video: data.video,
+				});
 
-		socket.on("make-candidate", (data) => {
+				console.log(`Client with id ${socket.id} subscribed to room ${data.roomId}`);
+			}
+		);
+
+		socket.on(
+			"make-offer",
+			(data: { to: string; offer: RTCSessionDescriptionInit; audio: boolean; video: boolean }) => {
+				socket.to(data.to).emit("offer-made", {
+					offer: data.offer,
+					socket: socket.id,
+					user: socket.data.user.id,
+					audio: data.audio,
+					video: data.video,
+				});
+			}
+		);
+
+		socket.on("make-candidate", (data: { to: string; candidate: string; label: number | null }) => {
 			socket.to(data.to).emit("candidate-made", {
-				...data,
-				to: null,
+				candidate: data.candidate,
+				label: data.label,
 				socket: socket.id,
 			});
 		});
 
-		socket.on("make-answer", (data) => {
+		socket.on("make-answer", (data: { to: string; answer: RTCSessionDescriptionInit }) => {
 			socket.to(data.to).emit("answer-made", {
 				socket: socket.id,
 				answer: data.answer,
 			});
 		});
 
-		socket.on("start-call", (data) => {
+		socket.on("start-call", (data: { to: string }) => {
 			socket.to(data.to).emit("call-started", { socket: socket.id });
 		});
 
-		socket.on("leave-call", (data) => {
-			socket.to(data.to).emit("left-call", { socket: socket.id });
+		socket.on("leave-call", (data: { to: string }) => {
+			socket.to(data.to).emit("left-call", { socket: socket.id, user: socket.data.user.id });
 		});
 
-		socket.on("unsubscribe", async (data) => {
-			socket.leave(data.roomid);
-			rooms = rooms.filter((id: string) => id !== data.roomId);
-			clients[socket.data.user.id].rooms = clients[socket.data.user.id].rooms.filter(
-				(id: string) => id !== data.roomId
-			);
-			console.log(`Client with id ${socket.data.user.id} unsubscribed from room ${data.roomId}`);
+		socket.on("unsubscribe", async (data: { roomId: string }) => {
 			const room = await Room.findById(data.roomId);
-			room && (room.users = room?.users.filter((id) => !id.equals(socket.data.user.id)));
-			if (room?.users.length === 0) {
-				await room.deleteOne();
-			} else {
-				await room?.save();
-			}
+			if (!room) return;
+			room && (room.users = room.users.filter((id) => !id.equals(socket.data.user.id)));
+			await room?.save();
+			socket.leave(data.roomId);
+			console.log(`Client with id ${socket.data.user.id} unsubscribed from room ${data.roomId}`);
 		});
 
-		socket.on("send-message", (data) => {
-			ns.to(data.to).emit("message-sent", {
+		socket.on("send-message", async (data: { to: string; message: string }) => {
+			const chat = await Chat.create({
+				room: data.to,
 				message: data.message,
+				user: socket.data.user.id,
+			});
+			ns.to(data.to).emit("message-sent", {
+				chat: chat.toJSON(),
+			});
+		});
+
+		socket.on(
+			"mute-config",
+			({ audio, video, to }: { to: string; audio: boolean; video: boolean }) => {
+				socket.to(to).emit("new-mute-config", {
+					socket: socket.id,
+					audio,
+					video,
+				});
+			}
+		);
+
+		socket.on("disconnect", async () => {
+			ns.emit("user-disconnected", {
+				user: socket.data.user.id,
 				socket: socket.id,
 			});
-		});
-
-		socket.on("disconnect", () => {
-			clients[socket.data.user.id].oldSocketId = socket.id;
-			socket.leave(clients[socket.data.user.id].rooms);
-			clients[socket.data.user.id] = null;
-			ns.emit("user-disconnected", {
-				socketId: socket.id,
-			});
-			console.log(`Client disconnected with id: ${socket.data.user.id}`);
-		});
-
-		socket.on("reconnect", (attemptNumber) => {
-			console.log(
-				`Client with id ${socket.data.user.id} attempting to reconnect (attempt ${attemptNumber})...`
-			);
-			updateClient(socket.data.user.id, socket.id);
+			console.log(`Client disconnected with id: ${socket.id}`);
 		});
 	});
 }

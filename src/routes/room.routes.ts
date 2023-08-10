@@ -10,9 +10,16 @@ export default (app: Router) => {
 
 	router.get("/", auth(), expressAsyncHandler(RoomController.getRooms));
 
-	router.post("/", auth(), expressAsyncHandler(RoomController.createRoom));
+	
+	router.post("/", auth(), expressAsyncHandler(RoomController.saveRoom));
+
+	router.get("/user", auth(), expressAsyncHandler(RoomController.getUserRooms));
+
+	router.get("/call/:roomId", auth(), expressAsyncHandler(RoomController.getRoomByCallRoomId));
+
+	router.get("/:roomId/chat", auth(), expressAsyncHandler(RoomController.getChatsByRoomId));
 
 	router.get("/:roomId", auth(), expressAsyncHandler(RoomController.getRoomById));
 
-	router.delete("/:roomId", auth(), expressAsyncHandler(RoomController.getRoomById));
+	router.delete("/:roomId", auth(), expressAsyncHandler(RoomController.deleteRoomById));
 };

@@ -5,10 +5,17 @@ const roomSchema = new Schema(
 		users: [
 			{
 				type: Schema.Types.ObjectId,
-				ref: "user",
+				ref: "User",
 			},
 		],
+		callRoom: {
+			type: Schema.Types.ObjectId,
+			ref: "Room",
+		},
 		type: String,
+		name: { type: String },
+		avatar: String,
+		description: String,
 		updatedAt: {
 			type: Date,
 			default: Date.now,
@@ -38,5 +45,7 @@ roomSchema.post("findOneAndUpdate", function (doc) {
 		doc.updatedAt = Date.now();
 	}
 });
+
+roomSchema.index({ name: "text" });
 
 export default model("Room", roomSchema);
