@@ -50,7 +50,7 @@ export function setUpSocket(server: httpServer) {
 					if (chatRoom) {
 						const chat = await Chat.create({
 							room: chatRoom._id.toString(),
-							message: `Called you`,
+							message: `Start called`,
 							user: socket.data.user.id,
 						});
 						for (const user of room.users.filter(id => !id.equals(socket.data.user.id))) {
