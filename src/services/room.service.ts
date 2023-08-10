@@ -82,7 +82,7 @@ export class RoomService {
 	}
 
 	static async getUserRooms(
-		currentUser: any,
+		currentUser: UserDto,
 		queries: QueriesRequest
 	): Promise<PageResponse<RoomDto>> {
 		const page = parseInt(queries.page || "0"),
@@ -124,7 +124,7 @@ export class RoomService {
 		};
 	}
 
-	static async getRoomById(currentUser: any, roomId: string): Promise<DataResponse<RoomDto>> {
+	static async getRoomById(currentUser: UserDto, roomId: string): Promise<DataResponse<RoomDto>> {
 		const room = await checkUserInRoom(currentUser.id, roomId);
 		return { data: room.toJSON() };
 	}
@@ -149,7 +149,7 @@ export class RoomService {
 	}
 
 	static async getChatsByRoomId(
-		currentUser: any,
+		currentUser: UserDto,
 		roomId: string,
 		queries: QueriesRequest
 	): Promise<PageResponse<ChatDto>> {

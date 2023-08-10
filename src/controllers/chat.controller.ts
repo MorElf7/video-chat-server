@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import { QueriesRequest } from "../interfaces/IRequest";
 import HttpException from "../utils/HttpException";
 import { ChatService } from "../services/chat.service";
 

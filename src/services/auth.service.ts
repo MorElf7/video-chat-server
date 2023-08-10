@@ -96,7 +96,7 @@ export class AuthService {
 		};
 	}
 
-	static async getUserProfile(currentUser: any): Promise<DataResponse<UserDto>> {
+	static async getUserProfile(currentUser: UserDto): Promise<DataResponse<UserDto>> {
 		const userProfile = await User.findById(currentUser.id);
 		if (!userProfile) {
 			throw new HttpException(404, "User not found");

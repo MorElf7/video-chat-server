@@ -1,8 +1,7 @@
 import dotenv from "dotenv";
 
 const isDev = process.env.NODE_ENV === "development";
-
-dotenv.config({ path: isDev ? `../../../../.env.dev` : "" });
+dotenv.config({ path: isDev ? `.env.dev` : ".env" });
 
 const dirName = isDev ? "../../.dev-logs" : process.env.LOG_DIRNAME || "/var/log/video-chat";
 

@@ -1,8 +1,7 @@
 import { model, Schema } from "mongoose";
 
-const chatSchema = new Schema(
+const notificationSchema = new Schema(
 	{
-		message: String,
 		user: {
 			type: Schema.Types.ObjectId,
 			ref: "User",
@@ -11,6 +10,11 @@ const chatSchema = new Schema(
 			type: Schema.Types.ObjectId,
 			ref: "Room",
 		},
+		chat: {
+			type: Schema.Types.ObjectId,
+			ref: "Chat",
+		},
+		isRead: { type: Boolean, default: false },
 		updatedAt: {
 			type: Date,
 			default: Date.now,
@@ -26,20 +30,19 @@ const chatSchema = new Schema(
 			versionKey: false,
 			transform: function (doc, ret) {
 				delete ret._id;
-				delete ret.room;
 			},
 		},
 	}
 );
 
-chatSchema.virtual("id").get(function () {
+notificationSchema.virtual("id").get(function () {
 	return this._id.toString();
 });
 
-chatSchema.post("findOneAndUpdate", function (doc) {
+notificationSchema.post("findOneAndUpdate", function (doc) {
 	if (doc) {
 		doc.updatedAt = Date.now();
 	}
 });
 
-export default model("Chat", chatSchema);
+export default model("Notification", notificationSchema);

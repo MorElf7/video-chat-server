@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { Namespace, Server, Socket } from "socket.io";
 import config from "../config";
 import Chat from "../models/Chat";
+import Notification from "../models/Notification";
 import Room from "../models/Room";
 
 export function setUpSocket(server: httpServer) {
@@ -43,10 +44,29 @@ export function setUpSocket(server: httpServer) {
 					await room?.save();
 				}
 				const sockets = await ns.in(data.roomId).fetchSockets();
-				if (sockets.length === 1) {
-					ns.to(socket.id).emit("first-user");
-				}
 
+				if (data.type === "call" && sockets.length === 1) {
+					const chatRoom = await Room.findOne({ callRoom: data.roomId });
+					if (chatRoom) {
+						const chat = await Chat.create({
+							room: chatRoom._id.toString(),
+							message: `Called you`,
+							user: socket.data.user.id,
+						});
+						for (const user of room.users.filter(id => !id.equals(socket.data.user.id))) {
+							await Notification.create({
+								user,
+								room: chatRoom._id,
+								chat,
+								isRead: false,
+							});
+						}
+						socket.to(chatRoom._id.toString()).emit("call-started", {
+							socket: socket.id,
+							user: socket.data.user.id,
+						});
+					}
+				}
 				socket.to(data.roomId).emit("new-user", {
 					type: data.type,
 					socket: socket.id,
@@ -87,11 +107,10 @@ export function setUpSocket(server: httpServer) {
 			});
 		});
 
-		socket.on("start-call", (data: { to: string }) => {
-			socket.to(data.to).emit("call-started", { socket: socket.id });
-		});
-
-		socket.on("leave-call", (data: { to: string }) => {
+		socket.on("leave-call", async (data: { to: string }) => {
+			const room = await Room.findById(data.to);
+			if (!room) return;
+			socket.leave(data.to);
 			socket.to(data.to).emit("left-call", { socket: socket.id, user: socket.data.user.id });
 		});
 
@@ -105,11 +124,21 @@ export function setUpSocket(server: httpServer) {
 		});
 
 		socket.on("send-message", async (data: { to: string; message: string }) => {
+			const room = await Room.findById(data.to);
+			if (!room) return;
 			const chat = await Chat.create({
 				room: data.to,
 				message: data.message,
 				user: socket.data.user.id,
 			});
+			for (const user of room.users.filter(id => !id.equals(socket.data.user.id))) {
+				await Notification.create({
+					user,
+					room: room._id,
+					chat,
+					isRead: false,
+				});
+			}
 			ns.to(data.to).emit("message-sent", {
 				chat: chat.toJSON(),
 			});
