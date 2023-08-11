@@ -1,5 +1,7 @@
 {
   "version": 2,
+  "buildCommands": "tsc --build",
+  "installCommands": "npm install",
   "builds": [
       {
           "src": "src/index.ts",
