@@ -14,4 +14,4 @@ export async function setUpServer() {
 	return server;
 }
 
-setUpServer();
+export default setUpServer();

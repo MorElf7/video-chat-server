@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
       {
-          "src": "src/index.js",
+          "src": "src/index.ts",
           "use": "@now/node"
       }
   ],
   "routes": [
       {
-          "src": "src/(.*)",
-          "dest": "dist/index.js"
+          "src": "/(.*)",
+          "dest": "build/index.js"
       }
   ]
 }
