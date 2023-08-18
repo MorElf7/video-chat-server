@@ -8,10 +8,6 @@ const roomSchema = new Schema(
 				ref: "User",
 			},
 		],
-		callRoom: {
-			type: Schema.Types.ObjectId,
-			ref: "Room",
-		},
 		type: String,
 		name: { type: String },
 		avatar: String,

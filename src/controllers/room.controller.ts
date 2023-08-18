@@ -62,17 +62,6 @@ export class RoomController {
 			);
 		}
 	};
-	static getRoomByCallRoomId = async (req: Request, res: Response) => {
-		try {
-			const { roomId } = req.params;
-			res.json(await RoomService.getRoomByCallRoomId(roomId));
-		} catch (err: any) {
-			throw new HttpException(
-				err?.response?.data?.status || err?.status || 500,
-				err?.response?.data?.message || err?.message
-			);
-		}
-	};
 	static getChatsByRoomId = async (req: Request, res: Response) => {
 		try {
 			const { user } = res.locals;

@@ -26,17 +26,12 @@ export class RoomService {
 			room.description = description || room.description;
 			room = await room?.save();
 		} else {
-			const callRoom = await Room.create({
-				users: [currentUser.id, ...users],
-				type: "call",
-			});
 			room = await Room.create({
 				type: "chat",
 				avatar,
 				name,
 				description,
 				users: [currentUser.id, ...users],
-				callRoom,
 			});
 		}
 		return { data: room.toJSON() };
@@ -136,16 +131,6 @@ export class RoomService {
 		}
 		await Room.deleteOne();
 		return { message: `Room with id [${roomId}] deleted successfully`, status: 200 };
-	}
-
-	static async getRoomByCallRoomId(roomId: string): Promise<DataResponse<RoomDto>> {
-		const room = await Room.findOne({
-			callRoom: roomId,
-		});
-		if (!room) {
-			throw new HttpException(404, "Room not found");
-		}
-		return { data: room.toJSON() };
 	}
 
 	static async getChatsByRoomId(
